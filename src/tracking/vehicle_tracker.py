@@ -42,6 +42,8 @@ class Track:
         self.age = 0                # Frames desde última detección
         self.hits = 1               # Total de detecciones asociadas
         self.trajectory = []        # Lista de centros (x, y)
+        self._class_votes = defaultdict(int)  # Votación de clasificación
+        self._class_votes[detection["class_name"]] += 1
         self._update_center()
 
     def _update_center(self):
@@ -53,10 +55,12 @@ class Track:
     def update(self, detection):
         """Actualiza el track con una nueva detección."""
         self.bbox = detection["bbox"]
-        self.class_name = detection["class_name"]
         self.confidence = detection["confidence"]
         self.age = 0
         self.hits += 1
+        # Votar por la clase: el nombre más frecuente gana
+        self._class_votes[detection["class_name"]] += 1
+        self.class_name = max(self._class_votes, key=self._class_votes.get)
         self._update_center()
 
     def mark_missed(self):

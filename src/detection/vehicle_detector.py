@@ -64,6 +64,23 @@ class VehicleDetector:
                 if class_id == 5:
                     class_name = ColorClassifier.classify_bus(frame, bbox)
 
+                # Corregir camiones pequeños: si es muy chico, es auto
+                if class_id == 7:
+                    bbox_w = bbox[2] - bbox[0]
+                    bbox_h = bbox[3] - bbox[1]
+                    bbox_area = bbox_w * bbox_h
+                    frame_area = frame.shape[0] * frame.shape[1]
+                    ratio = bbox_area / frame_area
+                    aspect = bbox_w / max(bbox_h, 1)
+                    # Camión real: grande y ancho. Si es pequeño, es auto
+                    if ratio < 0.015:
+                        class_name = "auto"
+                        class_id = 2
+                    # Si tiene proporción alta (más alto que ancho), es colectivo
+                    elif ratio < 0.04 and aspect < 0.8:
+                        class_name = "colectivo"
+                        class_id = 5
+
                 detections.append({
                     "bbox": bbox,
                     "confidence": confidence,
